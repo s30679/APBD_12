@@ -14,6 +14,39 @@ public class TripService : ITripService
         _tripRepository=tripRepository;
         _clientRepository=clientRepository;
     }
+    
+    public async Task<bool> AddClientToTripAsync(int id, ClientTripDTO DTO)
+    {
+        var wycieczka=await _tripRepository.GetTripByIdAsync(id);
+        
+        if(wycieczka==null || wycieczka.DateFrom<=DateTime.Now) 
+            return false;
+        if(await _clientRepository.GetClientByPeselAsync(DTO.Pesel) is not null)
+            throw new Exception("Taki klient został już dodany");
+
+        var nowyClient=new Client 
+        {
+            FirstName=DTO.FirstName,
+            LastName=DTO.LastName,
+            Email=DTO.Email,
+            Telephone=DTO.Telephone,
+            Pesel=DTO.Pesel
+        };
+
+        await _clientRepository.AddClientAsync(nowyClient);
+        await _clientRepository.SaveChangesAsync();
+
+        var clientDoWycieczki=new ClientTrip
+        {
+            IdClient=nowyClient.IdClient,
+            IdTrip=id,
+            RegisteredAt=DateTime.Now,
+            PaymentDate=DTO.PaymentDate
+        };
+        await _clientRepository.AddClientTripAsync(clientDoWycieczki);
+        await _clientRepository.SaveChangesAsync();
+        return true;
+    }
 
     public async Task<TripResponseDTO> GetTripsAsync(int strona, int wielkosc)
     {
@@ -41,38 +74,5 @@ public class TripService : ITripService
                 }).ToList()
             }).ToList()
         };
-    }
-
-    public async Task<bool> AddClientToTripAsync(int id, ClientTripDTO DTO)
-    {
-        var wycieczka=await _tripRepository.GetTripByIdAsync(id);
-        
-        if(wycieczka==null || wycieczka.DateFrom<=DateTime.Now) 
-            return false;
-        if(await _clientRepository.GetClientByPeselAsync(DTO.Pesel) is not null)
-            throw new Exception("Taki pesel został już dodany");
-
-        var nowyClient=new Client 
-        {
-            FirstName=DTO.FirstName,
-            LastName=DTO.LastName,
-            Email=DTO.Email,
-            Telephone=DTO.Telephone,
-            Pesel=DTO.Pesel
-        };
-
-        await _clientRepository.AddClientAsync(nowyClient);
-        await _clientRepository.SaveChangesAsync();
-
-        var clientDoWycieczki=new ClientTrip
-        {
-            IdClient=nowyClient.IdClient,
-            IdTrip=id,
-            RegisteredAt=DateTime.Now,
-            PaymentDate=DTO.PaymentDate
-        };
-        await _clientRepository.AddClientTripAsync(clientDoWycieczki);
-        await _clientRepository.SaveChangesAsync();
-        return true;
     }
 }

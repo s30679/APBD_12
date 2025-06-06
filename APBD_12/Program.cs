@@ -15,7 +15,7 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         
-        builder.Services.AddDbContext<TripContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("db-mssql")));
+        builder.Services.AddDbContext<TripContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("db-mssql")));
         builder.Services.AddScoped<IClientRepository, ClientRepository>();
         builder.Services.AddScoped<ITripRepository, TripRepository>();
         builder.Services.AddScoped<ITripService, TripService>();
